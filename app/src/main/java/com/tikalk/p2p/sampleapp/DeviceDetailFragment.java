@@ -88,7 +88,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
 //                            }
 //                        }
                         );
-                ((DeviceActionListener) getActivity()).connect(config);
+                ((P2PActivity) getActivity()).getP2PManager().connect(config);
 
             }
         });

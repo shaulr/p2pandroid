@@ -8,8 +8,8 @@ public class P2PManager {
     private final ConnectionType connectionType;
     private ConnectionRole role;
 
-    public void connect() {
-        connectionManager.connectToPeer(null);
+    public void connect(Object params) {
+        connectionManager.connectToPeer(params, null);
     }
 
 

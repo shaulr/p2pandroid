@@ -259,4 +259,8 @@ public class P2PActivity extends Activity {
 ////        }
 //
 //    }
+
+    public P2PManager getP2PManager() {
+        return p2PManager;
+    }
 }

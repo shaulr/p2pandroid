@@ -42,20 +42,20 @@ public class WiFiDirectManager extends ConnectionManager implements WifiP2pManag
     }
 
     @Override
-    public boolean connectToPeer(ConnectionPeer peer) {
-//        manager.connect(channel, config, new WifiP2pManager.ActionListener() {
-//
-//            @Override
-//            public void onSuccess() {
-//                // WiFiDirectBroadcastReceiver will notify us. Ignore for now.
-//            }
-//
-//            @Override
-//            public void onFailure(int reason) {
-////                Toast.makeText(P2PActivity.this, "Connect failed. Retry.",
-////                        Toast.LENGTH_SHORT).show();
-//            }
-//        });
+    public boolean connectToPeer(Object params, ConnectionPeer peer) {
+        WifiP2pConfig config = (WifiP2pConfig) params;
+        manager.connect(channel, config, new WifiP2pManager.ActionListener() {
+
+            @Override
+            public void onSuccess() {
+                // WiFiDirectBroadcastReceiver will notify us. Ignore for now.
+            }
+
+            @Override
+            public void onFailure(int reason) {
+                if(listener != null) listener.onError("could not connect " + reason);
+            }
+        });
         return false;
     }
 

@@ -13,7 +13,7 @@ class BLEConnectionManager extends ConnectionManager {
     }
 
     @Override
-    public boolean connectToPeer(ConnectionPeer peer) {
+    public boolean connectToPeer(Object params, ConnectionPeer peer) {
         return false;
     }
 

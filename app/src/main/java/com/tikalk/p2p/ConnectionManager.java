@@ -15,7 +15,7 @@ public abstract class ConnectionManager {
     public Context context;
 
     abstract public boolean getPeersList();
-    abstract public boolean connectToPeer(ConnectionPeer peer);
+    abstract public boolean connectToPeer(Object params, ConnectionPeer peer);
     abstract public boolean disconnectFromPeer();
     abstract public boolean send(byte[] data);
     abstract public boolean init(Context context);
