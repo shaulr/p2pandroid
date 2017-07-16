@@ -1,5 +1,6 @@
 package com.tikalk.p2p;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.IntentFilter;
@@ -9,6 +10,7 @@ import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.util.Log;
+import android.widget.ListAdapter;
 
 import com.tikalk.p2p.sampleapp.DeviceListFragment;
 
@@ -21,6 +23,7 @@ import java.util.List;
 
 public class WiFiDirectManager extends ConnectionManager implements WifiP2pManager.PeerListListener, WifiP2pManager.ConnectionInfoListener,
         WifiP2pManager.ChannelListener, DeviceActionListener {
+
     private static final String TAG = "WiFiDirectManager" ;
     private final P2PManager.ConnectionRole role;
     private WifiP2pManager manager;
@@ -31,14 +34,19 @@ public class WiFiDirectManager extends ConnectionManager implements WifiP2pManag
     private WifiP2pManager.Channel channel;
     private BroadcastReceiver receiver = null;
     private int status;
+    List<ConnectionPeer> peersList = new ArrayList<>();
+    private WiFiPeerListAdapter deviceListAdapter;
+
 
     public WiFiDirectManager(P2PManager.ConnectionRole role) {
         this.role = role;
+
     }
 
     @Override
     public boolean getPeersList() {
-        return false;
+        manager.discoverPeers(channel, null);
+        return true;
     }
 
     @Override
@@ -66,7 +74,7 @@ public class WiFiDirectManager extends ConnectionManager implements WifiP2pManag
 
     @Override
     public void cancelDisconnect() {
-    /*
+        /*
          * A cancel abort request by user. Disconnect i.e. removeGroup if
          * already connected. Else, request WifiP2pManager to abort the ongoing
          * request
@@ -159,10 +167,17 @@ public class WiFiDirectManager extends ConnectionManager implements WifiP2pManag
 
         receiver = new WiFiDirectBroadcastReceiver(this, manager, channel, context);
         context.registerReceiver(receiver, intentFilter);
+        channel = manager.initialize(context, context.getMainLooper(), null); // callback for loss of framework communication should be added
 
         return false;
     }
 
+    @Override
+    public ListAdapter getAdapter(Activity activity, int row_devices) {
+        if(deviceListAdapter == null) {
+            deviceListAdapter  = new WiFiPeerListAdapter(activity, activity, row_devices);
+        }
+        return deviceListAdapter;    }
 
 
     @Override
@@ -180,7 +195,8 @@ public class WiFiDirectManager extends ConnectionManager implements WifiP2pManag
         if(listener == null)
             return;
 
-        List<ConnectionPeer> peersList = new ArrayList<ConnectionPeer>();
+        peersList.clear();
+
         for(WifiP2pDevice device : peers.getDeviceList()) {
             peersList.add(ConnectionPeer.fromWiFiP2PDevice(device));
         }

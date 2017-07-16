@@ -1,8 +1,10 @@
 package com.tikalk.p2p;
 
+import android.app.Activity;
 import android.content.Context;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
+import android.widget.ListAdapter;
 
 import java.util.List;
 
@@ -32,5 +34,7 @@ public abstract class ConnectionManager {
             listener.onPeerUpdated(peer);
         }
     }
+
+    abstract public ListAdapter getAdapter(Activity activity, int row_devices) ;
 }
 

@@ -140,6 +140,7 @@ public class P2PActivity extends Activity {
                 final DeviceListFragment fragment = (DeviceListFragment) getFragmentManager()
                         .findFragmentById(R.id.frag_list);
                 fragment.onInitiateDiscovery();
+                fragment.setP2PManager(p2PManager);
                 p2PManager.discoverPeers();
 //                manager.discoverPeers(channel, new WifiP2pManager.ActionListener() {
 //

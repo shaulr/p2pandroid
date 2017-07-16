@@ -34,7 +34,9 @@ import android.widget.TextView;
 import com.tikalk.p2p.ConnectionPeer;
 import com.tikalk.p2p.DeviceActionListener;
 import com.tikalk.p2p.IConnectionListener;
+import com.tikalk.p2p.P2PManager;
 import com.tikalk.p2p.R;
+import com.tikalk.p2p.WiFiPeerListAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,11 +52,13 @@ public class  DeviceListFragment extends ListFragment implements IConnectionList
     ProgressDialog progressDialog = null;
     View mContentView = null;
     private WifiP2pDevice device;
+    private P2PManager p2PManager;
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        this.setListAdapter(new WiFiPeerListAdapter(getActivity(), R.layout.row_devices, peers));
+        this.setListAdapter(p2PManager.getDeviceAdapter(getActivity(), R.layout.row_devices));
+              //  new WiFiPeerListAdapter(getActivity(), getActivity(), R.layout.row_devices, peers));
 
     }
 
@@ -64,12 +68,12 @@ public class  DeviceListFragment extends ListFragment implements IConnectionList
         return mContentView;
     }
 
-    /**
-     * @return this device
-     */
-    public WifiP2pDevice getDevice() {
-        return device;
-    }
+//    /**
+//     * @return this device
+//     */
+//    public WifiP2pDevice getDevice() {
+//        return device;
+//    }
 
     private static String getDeviceStatus(int deviceStatus) {
         Log.d(P2PActivity.TAG, "Peer status :" + deviceStatus);
@@ -111,7 +115,7 @@ public class  DeviceListFragment extends ListFragment implements IConnectionList
         }
         peers.clear();
         peers.addAll(peersList);
-        ((DeviceListFragment.WiFiPeerListAdapter) getListAdapter()).notifyDataSetChanged();
+        ((WiFiPeerListAdapter) getListAdapter()).notifyDataSetChanged();
         if (peers.size() == 0) {
             Log.d(P2PActivity.TAG, "No devices found");
             return;
@@ -153,49 +157,7 @@ public class  DeviceListFragment extends ListFragment implements IConnectionList
 
     }
 
-    /**
-     * Array adapter for ListFragment that maintains WifiP2pDevice list.
-     */
-    private class WiFiPeerListAdapter extends ArrayAdapter<ConnectionPeer> {
 
-        private List<ConnectionPeer> items;
-
-        /**
-         * @param context
-         * @param textViewResourceId
-         * @param objects
-         */
-        public WiFiPeerListAdapter(Context context, int textViewResourceId,
-                List<ConnectionPeer> objects) {
-            super(context, textViewResourceId, objects);
-            items = objects;
-
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            View v = convertView;
-            if (v == null) {
-                LayoutInflater vi = (LayoutInflater) getActivity().getSystemService(
-                        Context.LAYOUT_INFLATER_SERVICE);
-                v = vi.inflate(R.layout.row_devices, null);
-            }
-            ConnectionPeer device = items.get(position);
-            if (device != null) {
-                TextView top = (TextView) v.findViewById(R.id.device_name);
-                TextView bottom = (TextView) v.findViewById(R.id.device_details);
-                if (top != null) {
-                    top.setText(device.getName());
-                }
-                if (bottom != null) {
-                    bottom.setText(device.getStatus());
-                }
-            }
-
-            return v;
-
-        }
-    }
 
     /**
      * Update UI for this device.
@@ -235,5 +197,7 @@ public class  DeviceListFragment extends ListFragment implements IConnectionList
     }
 
 
-
+    public void setP2PManager(P2PManager p2PManager) {
+        this.p2PManager = p2PManager;
+    }
 }

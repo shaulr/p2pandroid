@@ -1,5 +1,8 @@
 package com.tikalk.p2p;
 
+import android.app.Activity;
+import android.widget.ListAdapter;
+
 /**
  * Created by shaul on 20/06/2017.
  */
@@ -7,9 +10,14 @@ package com.tikalk.p2p;
 public class P2PManager {
     private final ConnectionType connectionType;
     private ConnectionRole role;
-
     public void connect(Object params) {
         connectionManager.connectToPeer(params, null);
+    }
+
+    public ListAdapter getDeviceAdapter(Activity activity, int row_devices) {
+
+
+       return connectionManager.getAdapter( activity,  row_devices);
     }
 
 
