@@ -3,7 +3,9 @@ package com.tikalk.p2p;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.Uri;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
@@ -11,9 +13,20 @@ import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.util.Log;
 import android.widget.ListAdapter;
+import android.widget.TextView;
 
 import com.tikalk.p2p.sampleapp.DeviceListFragment;
+import com.tikalk.p2p.sampleapp.FileTransferService;
+import com.tikalk.p2p.sampleapp.P2PActivity;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,7 +35,7 @@ import java.util.List;
  */
 
 public class WiFiDirectManager extends ConnectionManager implements WifiP2pManager.PeerListListener, WifiP2pManager.ConnectionInfoListener,
-        WifiP2pManager.ChannelListener, DeviceActionListener {
+        WifiP2pManager.ChannelListener, DeviceActionListener, WifiP2pManager.ActionListener {
 
     private static final String TAG = "WiFiDirectManager" ;
     private final P2PManager.ConnectionRole role;
@@ -36,16 +49,17 @@ public class WiFiDirectManager extends ConnectionManager implements WifiP2pManag
     private int status;
     List<ConnectionPeer> peersList = new ArrayList<>();
     private WiFiPeerListAdapter deviceListAdapter;
-
+    private Socket socket;
+    private boolean stopListening = false;
+    private final static int PORT = 9002;
 
     public WiFiDirectManager(P2PManager.ConnectionRole role) {
         this.role = role;
-
     }
 
     @Override
     public boolean getPeersList() {
-        manager.discoverPeers(channel, null);
+        manager.discoverPeers(channel, this);
         return true;
     }
 
@@ -112,7 +126,7 @@ public class WiFiDirectManager extends ConnectionManager implements WifiP2pManag
 
             @Override
             public void onSuccess() {
-                // WiFiDirectBroadcastReceiver will notify us. Ignore for now.
+                startServerSocket();
             }
 
             @Override
@@ -122,6 +136,33 @@ public class WiFiDirectManager extends ConnectionManager implements WifiP2pManag
             }
         });
     }
+
+    private void startServerSocket() {
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+
+                    ServerSocket ss = new ServerSocket(PORT);
+
+                    while (!stopListening) {
+                        //Server is waiting for client here, if needed
+                        Socket s = ss.accept();
+                        //sever connected
+
+                       // output.close();
+                        s.close();
+                    }
+                    ss.close();
+                } catch (IOException e) {
+                    Log.e(TAG, Log.getStackTraceString(e));
+                }
+            }
+
+        });
+        thread.start();
+    }
+
 
     @Override
     public void disconnect() {
@@ -151,6 +192,20 @@ public class WiFiDirectManager extends ConnectionManager implements WifiP2pManag
 
     @Override
     public boolean send(byte[] data) {
+//        ConnectionPeer peer = new ConnectionPeer();
+//        Uri uri = data.getData();
+//        TextView statusText = (TextView) mContentView.findViewById(R.id.status_text);
+//        statusText.setText("Sending: " + uri);
+//        Log.d(P2PActivity.TAG, "Intent----------- " + uri);
+//        Intent serviceIntent = new Intent(getActivity(), FileTransferService.class);
+//        serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
+//        serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_PATH, uri.toString());
+//        serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS,
+//                info.groupOwnerAddress.getHostAddress());
+//        serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, 8988);
+//        getActivity().startService(serviceIntent);
+
+
         return false;
     }
 
@@ -177,7 +232,8 @@ public class WiFiDirectManager extends ConnectionManager implements WifiP2pManag
         if(deviceListAdapter == null) {
             deviceListAdapter  = new WiFiPeerListAdapter(activity, activity, row_devices);
         }
-        return deviceListAdapter;    }
+        return deviceListAdapter;
+    }
 
 
     @Override
@@ -218,5 +274,15 @@ public class WiFiDirectManager extends ConnectionManager implements WifiP2pManag
         } else {
             listener.onDisconnected();
         }
+    }
+
+    @Override
+    public void onSuccess() {
+
+    }
+
+    @Override
+    public void onFailure(int i) {
+
     }
 }
