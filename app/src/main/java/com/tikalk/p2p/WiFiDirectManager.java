@@ -21,7 +21,9 @@ import com.tikalk.p2p.sampleapp.P2PActivity;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -29,6 +31,8 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.tikalk.p2p.P2PManager.ConnectionRole.server;
 
 /**
  * Created by shaul on 20/06/2017.
@@ -49,10 +53,13 @@ public class WiFiDirectManager extends ConnectionManager implements WifiP2pManag
     private int status;
     List<ConnectionPeer> peersList = new ArrayList<>();
     private WiFiPeerListAdapter deviceListAdapter;
-    private Socket socket;
     private boolean stopListening = false;
     private final static int PORT = 9002;
-
+    private Socket socket;
+    private ServerSocket serverSocket;
+    private OutputStream os;
+    private InputStream is;
+    private SocketReadThread readThread;
     public WiFiDirectManager(P2PManager.ConnectionRole role) {
         this.role = role;
     }
@@ -126,7 +133,10 @@ public class WiFiDirectManager extends ConnectionManager implements WifiP2pManag
 
             @Override
             public void onSuccess() {
-                startServerSocket();
+                if(role == server)
+                    startServerSocket();
+                else
+                    connectToServer("192.168.49.1");
             }
 
             @Override
@@ -136,24 +146,46 @@ public class WiFiDirectManager extends ConnectionManager implements WifiP2pManag
             }
         });
     }
+    private void connectToServer(final String ip) {
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    socket = new Socket(ip, PORT);
+                    if(socket == null) {
+                        listener.onError("could not connect to " + ip);
+                        return;
+                    }
+                    is = socket.getInputStream();
+                    os = socket.getOutputStream();
+                } catch (IOException e) {
+                    Log.d(TAG, "could not connect to server " + e.getMessage());
+                }
+            }
+        });
+        thread.start();
 
+    }
     private void startServerSocket() {
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
 
-                    ServerSocket ss = new ServerSocket(PORT);
+                    serverSocket = new ServerSocket(PORT);
 
                     while (!stopListening) {
                         //Server is waiting for client here, if needed
-                        Socket s = ss.accept();
-                        //sever connected
+                        socket = serverSocket.accept();
 
-                       // output.close();
-                        s.close();
+                        os = socket.getOutputStream();
+                        is = socket.getInputStream();
+                        readThread = new SocketReadThread(is, listener);
+                        readThread.start();
+                        //sever connected
+                        listener.onConnected();
                     }
-                    ss.close();
+
                 } catch (IOException e) {
                     Log.e(TAG, Log.getStackTraceString(e));
                 }
@@ -166,6 +198,18 @@ public class WiFiDirectManager extends ConnectionManager implements WifiP2pManag
 
     @Override
     public void disconnect() {
+        try {
+            if(readThread != null) {
+                readThread.interrupt();
+                readThread = null;
+            }
+            if(os != null) os.close();
+            if(is  != null) is.close();
+            if(socket != null) socket.close();
+            if(serverSocket != null) serverSocket.close();
+        } catch (IOException e) {
+            Log.d(TAG, "error closing socket " + e.getMessage());
+        }
         manager.removeGroup(channel, new WifiP2pManager.ActionListener() {
 
             @Override
@@ -192,19 +236,11 @@ public class WiFiDirectManager extends ConnectionManager implements WifiP2pManag
 
     @Override
     public boolean send(byte[] data) {
-//        ConnectionPeer peer = new ConnectionPeer();
-//        Uri uri = data.getData();
-//        TextView statusText = (TextView) mContentView.findViewById(R.id.status_text);
-//        statusText.setText("Sending: " + uri);
-//        Log.d(P2PActivity.TAG, "Intent----------- " + uri);
-//        Intent serviceIntent = new Intent(getActivity(), FileTransferService.class);
-//        serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
-//        serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_PATH, uri.toString());
-//        serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS,
-//                info.groupOwnerAddress.getHostAddress());
-//        serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, 8988);
-//        getActivity().startService(serviceIntent);
-
+        try {
+            if(os != null) os.write(data);
+            } catch (IOException e) {
+                Log.d(TAG, "error writing to socket" + e.getMessage());
+            }
 
         return false;
     }
