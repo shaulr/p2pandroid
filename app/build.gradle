@@ -5,7 +5,7 @@ android {
     buildToolsVersion "25.0.2"
 
     defaultConfig {
-        applicationId "com.example.android.p2p"
+        applicationId "com.tikalk.p2p"
         minSdkVersion 14
         targetSdkVersion 14
     }

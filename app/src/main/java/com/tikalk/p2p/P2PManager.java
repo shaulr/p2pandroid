@@ -1,6 +1,7 @@
 package com.tikalk.p2p;
 
 import android.app.Activity;
+import android.content.Context;
 import android.widget.ListAdapter;
 
 /**
@@ -10,13 +11,13 @@ import android.widget.ListAdapter;
 public class P2PManager {
     private final ConnectionType connectionType;
     private ConnectionRole role;
+    private Context context;
+
     public void connect(Object params) {
         connectionManager.connectToPeer(params, null);
     }
 
     public ListAdapter getDeviceAdapter(Activity activity, int row_devices) {
-
-
        return connectionManager.getAdapter( activity,  row_devices);
     }
 
@@ -39,7 +40,8 @@ public class P2PManager {
         connectionManager.registerListener(listener);
     }
 
-    public void init(ConnectionRole role) {
+    public void init(ConnectionRole role, Context context) {
+        this.context = context;
         switch(connectionType) {
             case wiFiDirect:
                 initWifiDirect(role);
@@ -65,6 +67,7 @@ public class P2PManager {
 
     private void initWifiDirect(ConnectionRole role) {
         connectionManager = new WiFiDirectManager(role);
+        connectionManager.init(context);
     }
 
     public ConnectionType getConnectionType() {

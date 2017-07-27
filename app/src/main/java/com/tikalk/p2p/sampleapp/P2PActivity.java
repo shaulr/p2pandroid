@@ -61,6 +61,11 @@ public class P2PActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         p2PManager = new P2PManager(P2PManager.ConnectionType.wiFiDirect, P2PManager.ConnectionRole.client);
+        p2PManager.init(P2PManager.ConnectionRole.server, this);
+        final DeviceListFragment fragment = (DeviceListFragment) getFragmentManager()
+                .findFragmentById(R.id.frag_list);
+        fragment.onInitiateDiscovery();
+        fragment.setP2PManager(p2PManager);
         // add necessary intent values to be matched.
 
 //        intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
@@ -76,7 +81,7 @@ public class P2PActivity extends Activity {
     @Override
     public void onResume() {
         super.onResume();
-        p2PManager.init(P2PManager.ConnectionRole.client);
+//        p2PManager.init(P2PManager.ConnectionRole.client, this);
 //        receiver = new WiFiDirectBroadcastReceiver(wifiP2pManager, channel, this);
 //        registerReceiver(receiver, intentFilter);
     }
@@ -132,30 +137,16 @@ public class P2PActivity extends Activity {
                 return true;
 
             case R.id.atn_direct_discover:
-                if (!isWifiP2pEnabled) {
-                    Toast.makeText(P2PActivity.this, R.string.p2p_off_warning,
-                            Toast.LENGTH_SHORT).show();
-                    return true;
-                }
+//                if (!isWifiP2pEnabled) {
+//                    Toast.makeText(P2PActivity.this, R.string.p2p_off_warning,
+//                            Toast.LENGTH_SHORT).show();
+//                    return true;
+//                }
                 final DeviceListFragment fragment = (DeviceListFragment) getFragmentManager()
                         .findFragmentById(R.id.frag_list);
                 fragment.onInitiateDiscovery();
                 fragment.setP2PManager(p2PManager);
-                p2PManager.discoverPeers();
-//                manager.discoverPeers(channel, new WifiP2pManager.ActionListener() {
-//
-//                    @Override
-//                    public void onSuccess() {
-//                        Toast.makeText(P2PActivity.this, "Discovery Initiated",
-//                                Toast.LENGTH_SHORT).show();
-//                    }
-//
-//                    @Override
-//                    public void onFailure(int reasonCode) {
-//                        Toast.makeText(P2PActivity.this, "Discovery Failed : " + reasonCode,
-//                                Toast.LENGTH_SHORT).show();
-//                    }
-//                });
+
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

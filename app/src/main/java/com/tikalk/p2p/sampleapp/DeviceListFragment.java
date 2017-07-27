@@ -16,6 +16,7 @@
 
 package com.tikalk.p2p.sampleapp;
 
+import android.app.Fragment;
 import android.app.ListFragment;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -27,7 +28,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Adapter;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -46,25 +50,28 @@ import java.util.List;
  * A ListFragment that displays available peers on discovery and requests the
  * parent activity to handle user interaction events
  */
-public class  DeviceListFragment extends ListFragment implements IConnectionListener {
+public class  DeviceListFragment extends Fragment implements IConnectionListener, AdapterView.OnItemClickListener {
 
     private List<ConnectionPeer> peers = new ArrayList<>();
     ProgressDialog progressDialog = null;
     View mContentView = null;
     private WifiP2pDevice device;
     private P2PManager p2PManager;
+    private ListView peerList;
+    private ListAdapter listAdapter;
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        this.setListAdapter(p2PManager.getDeviceAdapter(getActivity(), R.layout.row_devices));
-              //  new WiFiPeerListAdapter(getActivity(), getActivity(), R.layout.row_devices, peers));
+
 
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         mContentView = inflater.inflate(R.layout.device_list, null);
+        peerList = (ListView)mContentView.findViewById(R.id.peerList);
+        peerList.setOnItemClickListener(this);
         return mContentView;
     }
 
@@ -94,14 +101,7 @@ public class  DeviceListFragment extends ListFragment implements IConnectionList
         }
     }
 
-    /**
-     * Initiate a connection with the peer.
-     */
-    @Override
-    public void onListItemClick(ListView l, View v, int position, long id) {
-        WifiP2pDevice device = (WifiP2pDevice) getListAdapter().getItem(position);
-        ((DeviceActionListener) getActivity()).showDetails(device);
-    }
+
 
     @Override
     public void onConnected() {
@@ -149,7 +149,8 @@ public class  DeviceListFragment extends ListFragment implements IConnectionList
 
     @Override
     public void onPeerUpdated(ConnectionPeer peer) {
-
+        peers.add(peer);
+        ((WiFiPeerListAdapter) getListAdapter()).notifyDataSetChanged();
     }
 
     @Override
@@ -199,5 +200,22 @@ public class  DeviceListFragment extends ListFragment implements IConnectionList
 
     public void setP2PManager(P2PManager p2PManager) {
         this.p2PManager = p2PManager;
+        this.setListAdapter(p2PManager.getDeviceAdapter(getActivity(), R.layout.row_devices));
+        this.p2PManager.discoverPeers();
+        this.p2PManager.registerListener(this);
+    }
+
+    public ListAdapter getListAdapter() {
+        return listAdapter;
+    }
+
+    public void setListAdapter(ListAdapter listAdapter) {
+        this.listAdapter = listAdapter;
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        WifiP2pDevice device = (WifiP2pDevice) getListAdapter().getItem(position);
+        ((DeviceActionListener) getActivity()).showDetails(device);
     }
 }
